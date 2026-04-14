@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<title>Happy Birthday 🐾 | Letter + Gifts + 3D Flower</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600;700&family=Pinyon+Script&family=Dancing+Script:wght@400;500;600;700&family=Quicksand:wght@300;400;500;600&family=Fira+Code:wght@400;500&family=Pacifico&display=swap" rel="stylesheet">
+<!-- Three.js CDN for flower scene -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+        }
+    }
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --dark:#04040c; --pink:#ff6eb4; --pink-soft:#ffb3d9; --pink-glow:#ff9ed4;
+  --lav:#c9a0ff; --lav-dim:#8b50d0; --gold:#ffd700; --gold2:#ffec88;
+  --peony-mid:#c4527f; --paper:#fdf7ed; --paper2:#fffaf5;
+  --ink:#2a1a1c; --ink-mid:#7a4c5a;
+}
+body{
+  min-height:100vh; background:var(--dark);
+  overflow:hidden; font-family:'Quicksand',sans-serif;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding:50px 0 0; position:relative; perspective:1000px;
+  touch-action: pan-x pan-y;
+}
+/* CANVAS layers (rain, stars, confetti) */
+#rain-canvas,#stars-canvas,#confetti-canvas{
+  position:fixed; inset:0; pointer-events:none;
+}
+#rain-canvas{z-index:0;} #stars-canvas{z-index:1;}
+#confetti-canvas{z-index:80; opacity:0; transition:opacity .3s;}
+#confetti-canvas.on{opacity:1;}
+.night{position:fixed; left:50%; top:0; transform:translateX(-50%); width:100%; height:100%; background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(139,26,80,.18) 0%,rgba(107,32,144,.12) 35%,transparent 70%); filter:blur(.1vmin); z-index:2; pointer-events:none;}
+
+/* ===== FLOWER SCENE (CSS flowers) ===== */
+.flowers{position:relative; transform:scale(0.9); z-index:10; cursor:pointer;}
+.flower{position:absolute; bottom:10vmin; transform-origin:bottom center; z-index:10; --fl-speed:0.8s;}
+.flower--1{animation:moving-flower-1 4s linear infinite;}
+.flower--1 .flower__line{height:70vmin; animation-delay:.3s;}
+.flower--1 .flower__line__leaf--1{animation:blooming-leaf-right var(--fl-speed) 1.6s backwards;}
+.flower--1 .flower__line__leaf--2{animation:blooming-leaf-right var(--fl-speed) 1.4s backwards;}
+.flower--1 .flower__line__leaf--3{animation:blooming-leaf-left var(--fl-speed) 1.2s backwards;}
+.flower--1 .flower__line__leaf--4{animation:blooming-leaf-left var(--fl-speed) 1s backwards;}
+.flower--1 .flower__line__leaf--5{animation:blooming-leaf-right var(--fl-speed) 1.8s backwards;}
+.flower--1 .flower__line__leaf--6{animation:blooming-leaf-left var(--fl-speed) 2s backwards;}
+.flower--2{left:50%; transform:rotate(20deg); animation:moving-flower-2 4s linear infinite;}
+.flower--2 .flower__line{height:60vmin; animation-delay:.6s;}
+.flower--2 .flower__line__leaf--1{animation:blooming-leaf-right var(--fl-speed) 1.9s backwards;}
+.flower--2 .flower__line__leaf--2{animation:blooming-leaf-right var(--fl-speed) 1.7s backwards;}
+.flower--2 .flower__line__leaf--3{animation:blooming-leaf-left var(--fl-speed) 1.5s backwards;}
+.flower--2 .flower__line__leaf--4{animation:blooming-leaf-left var(--fl-speed) 1.3s backwards;}
+.flower--3{left:50%; transform:rotate(-15deg); animation:moving-flower-3 4s linear infinite;}
+.flower--3 .flower__line{animation-delay:.9s;}
+.flower--3 .flower__line__leaf--1{animation:blooming-leaf-right var(--fl-speed) 2.5s backwards;}
+.flower--3 .flower__line__leaf--2{animation:blooming-leaf-right var(--fl-speed) 2.3s backwards;}
+.flower--3 .flower__line__leaf--3{animation:blooming-leaf-left var(--fl-speed) 2.1s backwards;}
+.flower--3 .flower__line__leaf--4{animation:blooming-leaf-left var(--fl-speed) 1.9s backwards;}
+.flower__leafs{position:relative; animation:blooming-flower 2s backwards;}
+.flower__leafs--1{animation-delay:1.1s;}
+.flower__leafs--2{animation-delay:1.4s;}
+.flower__leafs--3{animation-delay:1.7s;}
+.flower--1 .flower__leafs::after,.flower--3 .flower__leafs::after{content:"";position:absolute;left:0;top:0;transform:translate(-50%,-100%);width:10vmin;height:10vmin;background-color:var(--pink);filter:blur(10vmin);}
+.flower--2 .flower__leafs::after{content:"";position:absolute;left:0;top:0;transform:translate(-50%,-100%);width:10vmin;height:10vmin;background-color:var(--lav);filter:blur(10vmin);}
+.flower--1 .flower__leaf,.flower--3 .flower__leaf{position:absolute;bottom:0;left:50%;width:8vmin;height:11vmin;border-radius:51% 49% 47% 53%/44% 45% 55% 69%;background-color:var(--peony-mid);background-image:linear-gradient(to top,#c4527f,#ffb3d9);transform-origin:bottom center;opacity:.92;}
+.flower--1 .flower__leaf--1,.flower--3 .flower__leaf--1{transform:translate(-10%,1%) rotateY(40deg) rotateX(-50deg);}
+.flower--1 .flower__leaf--2,.flower--3 .flower__leaf--2{transform:translate(-50%,-4%) rotateX(40deg);}
+.flower--1 .flower__leaf--3,.flower--3 .flower__leaf--3{transform:translate(-90%,0%) rotateY(45deg) rotateX(50deg);}
+.flower--1 .flower__leaf--4,.flower--3 .flower__leaf--4{width:8vmin;height:8vmin;transform-origin:bottom left;border-radius:4vmin 10vmin 4vmin 4vmin;transform:translate(0%,18%) rotateX(70deg) rotate(-43deg);background-image:linear-gradient(to top,#8b1a50,#ffb3d9);z-index:1;}
+.flower--2 .flower__leaf{position:absolute;bottom:0;left:50%;width:6vmin;height:14vmin;border-radius:46% 54% 42% 58%/30% 30% 70% 70%;background-color:#ffe4f0;background-image:linear-gradient(to top,#9b59b6,#ffe4f0);opacity:.9;}
+.flower--2 .flower__leaf--1{transform:translate(-10%,1%) rotateY(40deg) rotateX(-50deg);}
+.flower--2 .flower__leaf--2{transform:translate(-50%,-4%) rotateX(40deg);}
+.flower--2 .flower__leaf--3{transform:translate(-90%,0%) rotateY(45deg) rotateX(50deg);}
+.flower__white-circle{position:absolute;left:-3.5vmin;top:-3vmin;width:9vmin;height:4vmin;border-radius:50%;background:#fff;}
+.flower--1 .flower__white-circle::after,.flower--3 .flower__white-circle::after{content:"";position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:65%;height:65%;border-radius:inherit;background:radial-gradient(circle,#ffec88 30%,var(--gold) 70%);}
+.flower__light{position:absolute;bottom:0;width:1vmin;height:1vmin;border-radius:50%;filter:blur(.2vmin);animation:light-ans 4s linear infinite backwards;background:var(--gold);}
+.flower__line{height:55vmin;width:1.5vmin;box-shadow:inset 0 0 2px rgba(0,0,0,.5);animation:grow-flower-tree 4s backwards; background-image:linear-gradient(to top,transparent 10%,#8b1a4a,#c4527f);}
+.flower__grass{--c:#1a6b50;--line-w:1.5vmin;position:absolute;bottom:12vmin;left:-7vmin;display:flex;flex-direction:column;z-index:20;transform:rotate(-48deg) rotateY(40deg);}
+@keyframes moving-flower-1{0%,100%{transform:rotate(2deg)}50%{transform:rotate(-2deg)}}
+@keyframes moving-flower-2{0%,100%{transform:rotate(18deg)}50%{transform:rotate(14deg)}}
+@keyframes moving-flower-3{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(-20deg)}}
+@keyframes blooming-leaf-right{0%{transform-origin:left;transform:rotate(70deg) rotateY(30deg) scale(0)}}
+@keyframes blooming-leaf-left{0%{transform-origin:right;transform:rotate(-70deg) rotateY(30deg) scale(0)}}
+@keyframes grow-flower-tree{0%{height:0}}
+@keyframes blooming-flower{0%{transform:scale(0)}}
+@keyframes light-ans{0%{opacity:0;transform:translateY(0)}100%{transform:translateY(-30vmin);opacity:0;filter:blur(1vmin)}}
+
+/* ===== DOORS & LETTER ===== */
+#door-wrap{position:fixed; inset:0; z-index:50; display:flex; pointer-events:none;}
+#door-L,#door-R{flex:1; height:100%; transition:transform 1.5s cubic-bezier(.77,0,.18,1); background:var(--dark);}
+#door-L{transform-origin:left center; border-right:1px solid rgba(255,110,180,.1);}
+#door-R{transform-origin:right center; border-left:1px solid rgba(200,160,255,.1);}
+#door-wrap.open #door-L{transform:perspective(1400px) rotateY(-115deg);}
+#door-wrap.open #door-R{transform:perspective(1400px) rotateY(115deg);}
+#dim{position:fixed; inset:0; z-index:48; background:rgba(4,4,12,0); transition:background .7s ease; pointer-events:none;}
+#dim.on{background:rgba(4,4,12,.88); pointer-events:all;}
+
+/* ===== LETTER BOOK (mobile-friendly) ===== */
+#letter-wrap{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:14px; pointer-events:none;}
+#letter-wrap.on{pointer-events:all;}
+#letter-book{
+  display:flex; flex-direction:row; gap:0; width:min(96vw,1000px); max-height:90vh;
+  box-shadow:0 0 120px rgba(255,110,180,.3),0 0 60px rgba(200,160,255,.2),0 25px 60px rgba(0,0,0,.6);
+  opacity:0; transform:scale(.85) translateY(30px);
+  transition:opacity .7s ease .95s,transform .95s cubic-bezier(.34,1.3,.64,1) .9s;
+  border-radius:12px; background:transparent;
+}
+#letter-book.on{opacity:1; transform:scale(1) translateY(0);}
+@media (max-width: 750px){
+  #letter-book{flex-direction:column; width:94vw; max-height:88vh; overflow-y:auto;}
+}
+.page{
+  flex:1; background:var(--paper); overflow-y:auto; position:relative;
+  scrollbar-width:thin; scrollbar-color:var(--pink) #eeddcc;
+  border:1px solid rgba(255,200,180,.35);
+  background-image: repeating-linear-gradient(45deg, rgba(210,160,130,0.03) 0px, rgba(210,160,130,0.03) 2px, transparent 2px, transparent 8px);
+}
+.page:first-child{border-right:2px solid rgba(180,100,120,.3); border-radius:12px 0 0 12px;}
+.page:last-child{border-left:2px solid rgba(160,110,140,.2); border-radius:0 12px 12px 0;}
+@media (max-width: 750px){
+  .page:first-child{border-right:none; border-bottom:2px solid rgba(180,100,120,.3); border-radius:12px 12px 0 0;}
+  .page:last-child{border-left:none; border-radius:0 0 12px 12px;}
+}
+.page-inner{padding:clamp(20px,4vw,46px) clamp(16px,4vw,40px); position:relative;}
+.corner{position:absolute; width:42px; height:42px; z-index:5;}
+.corner svg{width:100%;}
+.c-tl{top:12px; left:12px;}.c-tr{top:12px; right:12px; transform:scaleX(-1);}
+.c-bl{bottom:24px; left:12px; transform:scaleY(-1);}.c-br{bottom:24px; right:12px; transform:scale(-1,-1);}
+.page-bar{height:8px; background:linear-gradient(90deg,#ffb3d9,#ff9ed4,#ffd966,#ffb3d9); opacity:.7; margin-bottom:4px;}
+.ribbon{position:absolute; top:-8px; right:-12px; width:60px; height:100px; background:linear-gradient(135deg,#ffb3d9,#ff6eb4); clip-path:polygon(0% 0%,100% 15%,100% 85%,0% 100%,15% 50%); opacity:.9; z-index:20;}
+
+/* letter content */
+.corgi-wrap{text-align:center; margin-bottom:10px; animation:corgiWiggle 0.5s infinite alternate; transform-origin:center bottom;}
+@keyframes corgiWiggle{0%{transform:rotate(-2deg) translateX(-2px)}100%{transform:rotate(2deg) translateX(2px)}}
+.bday-title{font-family:'Dancing Script',cursive; font-size:clamp(2rem,6vw,3.5rem); text-align:center; background:linear-gradient(135deg,#ff6eb4,#ffb3d9,#ffd966); -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:8px;}
+.bday-sub{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:clamp(0.7rem,2vw,0.85rem); letter-spacing:.2em; color:var(--gold2); text-align:center;}
+.body-text p{font-size:clamp(0.8rem,1.6vw,0.95rem); line-height:1.7; color:var(--ink-mid); font-weight:300; margin-bottom:10px;}
+.wish-card{border:1px solid rgba(255,140,160,.3); border-radius:20px 6px 20px 6px; background:rgba(255,245,240,0.6); padding:12px; margin-bottom:14px;}
+.wish-icon{font-size:1.4rem;}
+.letter-sig{font-family:'Pinyon Script',cursive; font-size:clamp(1.5rem,5vw,2rem); color:#aa6070;}
+.page-num{position:absolute; bottom:12px; left:50%; transform:translateX(-50%); font-family:'Cinzel',serif; font-size:clamp(0.5rem,2vw,0.65rem); letter-spacing:.2em; color:#c88aa8; background:rgba(255,245,235,.6); padding:2px 12px; border-radius:40px;}
+.balloon-row{display:flex; gap:12px; justify-content:center; margin:10px 0; flex-wrap:wrap;}
+.balloon{font-size:clamp(1.2rem,5vw,1.8rem); animation:balFloat 2s infinite;}
+@keyframes balFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.btn-continue{background:linear-gradient(135deg,#ff6eb4,#c9a0ff); border:none; padding:14px 20px; border-radius:40px; color:white; font-family:'Cinzel',serif; font-weight:bold; cursor:pointer; margin-top:20px; width:100%; transition:transform .2s; font-size:clamp(0.7rem,3vw,0.85rem); letter-spacing:1px;}
+.btn-continue:hover{transform:translateY(-3px);}
+.btn-next-flower{background:linear-gradient(135deg,#ff9ed4,#c9a0ff); border:none; padding:14px 20px; border-radius:40px; color:white; font-family:'Cinzel',serif; font-weight:bold; cursor:pointer; margin-top:16px; width:100%; transition:transform .2s; font-size:clamp(0.7rem,3vw,0.85rem); letter-spacing:1px; box-shadow:0 4px 12px rgba(255,110,180,.4);}
+.btn-next-flower:hover{transform:translateY(-3px);}
+
+/* ===== INTERACTIVE SURPRISES OVERLAY ===== */
+#surprises-overlay{
+  position:fixed; inset:0; z-index:200;
+  background:rgba(4,4,12,.94);
+  backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .4s ease;
+}
+#surprises-overlay.active{opacity:1; pointer-events:all;}
+.surprises-container{
+  width:min(90vw, 550px);
+  max-height:85vh;
+  background:var(--paper);
+  border-radius:40px;
+  overflow-y:auto;
+  box-shadow:0 0 60px rgba(255,110,180,.4);
+  border:1px solid rgba(255,200,180,.5);
+  scrollbar-width:thin;
+  padding:0 0 24px;
+}
+.sur-header{padding:18px 20px 0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--paper); z-index:10; border-radius:40px 40px 0 0;}
+.sur-header h2{font-family:'Pacifico',cursive; font-size:clamp(1.2rem,5vw,1.5rem); background:linear-gradient(135deg,#ff6eb4,#c9a0ff); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.quiz-close{background:none; border:none; font-size:1.8rem; cursor:pointer; color:#c4728c; padding:8px;}
+.tabs{display:flex; gap:8px; padding:0 20px; margin:12px 0 0;}
+.tab-btn{flex:1; padding:12px; border:none; background:rgba(255,200,180,.3); border-radius:30px; font-family:'Cinzel',serif; font-weight:bold; cursor:pointer; transition:all .2s; color:#5a3e4a; font-size:clamp(0.7rem,3vw,0.85rem);}
+.tab-btn.active{background:linear-gradient(135deg,#ff6eb4,#c9a0ff); color:white; box-shadow:0 4px 12px rgba(255,110,180,.4);}
+.tab-content{display:none; padding:20px; animation:fadeTab .3s ease;}
+.tab-content.active{display:block;}
+@keyframes fadeTab{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.gifts-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); gap:16px; margin:20px 0;}
+.gift-box{background:linear-gradient(145deg,#ffb3d9,#ff8ebc); border-radius:20px; padding:20px 8px; text-align:center; cursor:pointer; transition:all .2s; box-shadow:0 8px 16px rgba(0,0,0,.1);}
+.gift-box:hover{transform:scale(1.05) rotate(-2deg);}
+.gift-box.opened{opacity:0.6; background:#e0c4b0; cursor:default; filter:grayscale(0.1);}
+.gift-emoji{font-size:2.5rem; display:block;}
+.gift-title{font-weight:bold; margin-top:6px; color:#5a2a3a; font-size:clamp(0.7rem,2.5vw,0.85rem);}
+.gift-reveal{background:#fff0f3; border-radius:20px; padding:16px; margin-top:16px; border-left:5px solid #ff6eb4; font-size:clamp(0.8rem,3vw,0.9rem); position:relative; display:none;}
+.gift-reveal .close-reveal{position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.2rem; cursor:pointer; color:#c4728c; font-weight:bold;}
+.quiz-question{margin-bottom:24px; padding:12px; background:rgba(255,245,240,0.6); border-radius:20px;}
+.quiz-question p{font-weight:bold; margin-bottom:8px; color:#4a2e38; font-size:clamp(0.85rem,3vw,1rem);}
+.quiz-options{display:flex; flex-wrap:wrap; gap:10px;}
+.quiz-opt{background:#fff; border:2px solid #ffb3d9; padding:10px 16px; border-radius:40px; cursor:pointer; transition:all .2s; font-size:clamp(0.7rem,2.5vw,0.85rem); flex:1 0 auto; text-align:center;}
+.quiz-opt:hover{background:#ffe0f0; transform:scale(1.02);}
+.quiz-opt.correct-disabled{background:#c9e0c5; border-color:#5a9e4e; cursor:default; opacity:0.8;}
+.quiz-feedback{font-size:clamp(0.7rem,2.5vw,0.8rem); margin-top:6px; color:#c4527f;}
+.unlock-progress{background:rgba(255,200,180,.3); border-radius:30px; padding:10px; text-align:center; margin-top:16px; font-size:clamp(0.7rem,2.5vw,0.8rem);}
+#close-btn{position:fixed; top:16px; right:16px; z-index:90; background:rgba(0,0,0,.5); border:1px solid var(--pink); color:var(--pink); font-family:'Cinzel',serif; font-size:clamp(0.6rem,2vw,0.7rem); letter-spacing:.2em; padding:8px 16px; border-radius:40px; backdrop-filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .3s;}
+#close-btn.on{opacity:1; pointer-events:all;}
+.petal{position:fixed; pointer-events:none; z-index:45; animation:petalFloat 3s ease-out forwards;}
+@keyframes petalFloat{0%{opacity:1; transform:translateY(0) rotate(0)}100%{opacity:0; transform:translateY(-140px) rotate(380deg) scale(0)}}
+
+/* ===== 3D FLOWER SCENE CONTAINER ===== */
+#flower-scene-container {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #0a0a1f;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.3s, opacity 0.5s ease;
+}
+#flower-scene-container.visible {
+    visibility: visible;
+    opacity: 1;
+    transition: visibility 0s 0s, opacity 0.5s ease;
+}
+#flower-scene-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+.back-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1010;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid #ff9ed4;
+    color: #ffb3d9;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    padding: 8px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.back-btn:hover {
+    background: rgba(255,110,180,0.3);
+    color: white;
+}
+</style>
+</head>
+<body>
+<canvas id="rain-canvas"></canvas>
+<canvas id="stars-canvas"></canvas>
+<canvas id="confetti-canvas"></canvas>
+<div class="night"></div>
+
+<!-- FLOWER SCENE (CSS flowers) -->
+<div class="flowers" id="scene">
+  <div class="flower flower--1"><div class="flower__leafs flower__leafs--1"><div class="flower__leaf flower__leaf--1"></div><div class="flower__leaf flower__leaf--2"></div><div class="flower__leaf flower__leaf--3"></div><div class="flower__leaf flower__leaf--4"></div><div class="flower__white-circle"></div><div class="flower__light flower__light--1"></div><div class="flower__light flower__light--2"></div><div class="flower__light flower__light--3"></div><div class="flower__light flower__light--4"></div></div><div class="flower__line"><div class="flower__line__leaf flower__line__leaf--1"></div><div class="flower__line__leaf flower__line__leaf--2"></div><div class="flower__line__leaf flower__line__leaf--3"></div><div class="flower__line__leaf flower__line__leaf--4"></div></div></div>
+  <div class="flower flower--2"><div class="flower__leafs flower__leafs--2"><div class="flower__leaf flower__leaf--1"></div><div class="flower__leaf flower__leaf--2"></div><div class="flower__leaf flower__leaf--3"></div><div class="flower__leaf flower__leaf--4"></div><div class="flower__white-circle"></div><div class="flower__light flower__light--1"></div><div class="flower__light flower__light--2"></div><div class="flower__light flower__light--3"></div><div class="flower__light flower__light--4"></div></div><div class="flower__line"><div class="flower__line__leaf flower__line__leaf--1"></div><div class="flower__line__leaf flower__line__leaf--2"></div><div class="flower__line__leaf flower__line__leaf--3"></div><div class="flower__line__leaf flower__line__leaf--4"></div></div></div>
+  <div class="flower flower--3"><div class="flower__leafs flower__leafs--3"><div class="flower__leaf flower__leaf--1"></div><div class="flower__leaf flower__leaf--2"></div><div class="flower__leaf flower__leaf--3"></div><div class="flower__leaf flower__leaf--4"></div><div class="flower__white-circle"></div><div class="flower__light flower__light--1"></div><div class="flower__light flower__light--2"></div><div class="flower__light flower__light--3"></div><div class="flower__light flower__light--4"></div></div><div class="flower__line"><div class="flower__line__leaf flower__line__leaf--1"></div><div class="flower__line__leaf flower__line__leaf--2"></div><div class="flower__line__leaf flower__line__leaf--3"></div><div class="flower__line__leaf flower__line__leaf--4"></div></div></div>
+  <div class="growing-grass"><div class="flower__grass"><div class="flower__grass--top"></div><div class="flower__grass--bottom"></div></div></div>
+</div>
+
+<!-- DOORS -->
+<div id="door-wrap"><div id="door-L"></div><div id="door-R"></div></div>
+<div id="dim"></div>
+
+<!-- LETTER BOOK -->
+<div id="letter-wrap">
+  <div id="letter-book">
+    <!-- PAGE 1 : Corgi + letter -->
+    <div class="page">
+      <div class="page-bar"></div>
+      <div class="corner c-tl"><svg viewBox="0 0 48 48"><path d="M8 40L8 8L40 8" stroke="#ff8ebc" stroke-width="1.8"/><circle cx="8" cy="8" r="4" fill="#ffb3d9" opacity=".45"/></svg></div>
+      <div class="corner c-tr"><svg viewBox="0 0 48 48"><path d="M8 40L8 8L40 8" stroke="#ff8ebc" stroke-width="1.8"/><circle cx="8" cy="8" r="4" fill="#ffb3d9" opacity=".45"/></svg></div>
+      <div class="page-inner">
+        <div class="corgi-wrap">
+          <svg width="150" height="150" viewBox="0 0 200 190"><defs><radialGradient id="corgiFur" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#F7B05E"/><stop offset="100%" stop-color="#DC8A3A"/></radialGradient></defs><ellipse cx="110" cy="155" rx="58" ry="48" fill="url(#corgiFur)"/><ellipse cx="110" cy="160" rx="42" ry="32" fill="#FCE6C4"/><rect x="74" y="175" width="24" height="20" rx="10" fill="#C16F2E"/><rect x="122" y="175" width="24" height="20" rx="10" fill="#C16F2E"/><g style="transform-origin:180px 140px;animation:tailWag 0.2s infinite alternate;"><ellipse cx="172" cy="133" rx="18" ry="12" fill="#DC8A3A"/></g><circle cx="110" cy="95" r="45" fill="url(#corgiFur)"/><ellipse cx="110" cy="85" rx="28" ry="22" fill="#FCE6C4" opacity="0.8"/><g style="transform-origin:65px 65px;animation:earFlop 0.5s infinite alternate;"><polygon points="65,52 42,15 88,60" fill="#B76929"/></g><g style="transform-origin:155px 65px;animation:earFlop 0.5s infinite alternate 0.1s;"><polygon points="155,52 178,15 132,60" fill="#B76929"/></g><circle cx="85" cy="92" r="9" fill="white"/><circle cx="135" cy="92" r="9" fill="white"/><circle cx="83" cy="90" r="5" fill="#2F1B0C"/><circle cx="133" cy="90" r="5" fill="#2F1B0C"/><path d="M143 95 L150 92 L143 89" fill="none" stroke="#2F1B0C" stroke-width="2"/><ellipse cx="62" cy="108" rx="11" ry="7" fill="#FFA5B9" opacity="0.8"/><ellipse cx="158" cy="108" rx="11" ry="7" fill="#FFA5B9" opacity="0.8"/><ellipse cx="110" cy="110" rx="7" ry="5.5" fill="#4C2A1A"/><path d="M92 117 Q110 128 128 117" fill="none" stroke="#9B4A2E" stroke-width="2"/><ellipse cx="110" cy="124" rx="6" ry="4.5" fill="#FF6B8B"/><g transform="translate(110,138)"><rect x="-20" y="-7" width="40" height="14" rx="7" fill="#FF69B4"/><polygon points="-12,-7 0,-22 12,-7" fill="#FF85B9"/></g><g style="transform-origin:110px 38px;animation:hatWobble 1.2s infinite;"><polygon points="110,20 78,72 142,72" fill="#FF69B4"/><circle cx="110" cy="18" r="10" fill="#FFB347"/></g></svg>
+        </div>
+        <div class="bday-title">Happy Birthday!</div>
+        <p class="bday-sub">🐾 woof! it's your special day 🎂</p>
+        <div class="body-text">
+          <p>hello i dont know how to create a message but im gonna try hehehhe happy birthday and i wish you well and im lucky that i met you and i love you so much and im always here and i hope you like this i created letter pag hindi sasabog school ko YESS sabi nga ni daniel ceasar you're my best part ANOO DAW?? WHAT?? i dont want to create like a message letter pero parang cute kasi heheheh and rare ito super rare and next time dont worry hand written na HAHAHAHAHA</p>
+        </div>
+        <div class="letter-sig">Always Yours 💖</div>
+      </div>
+      <div class="page-num">— ✿ I · II ✿ —</div>
+    </div>
+    <!-- PAGE 2 : Wishes + buttons -->
+    <div class="page">
+      <div class="page-bar"></div>
+      <div class="corner c-tl"><svg viewBox="0 0 48 48"><path d="M8 40L8 8L40 8" stroke="#c9a0ff" stroke-width="1.5"/><circle cx="8" cy="8" r="4" fill="#e6bbea" opacity=".5"/></svg></div>
+      <div class="corner c-tr"><svg viewBox="0 0 48 48"><path d="M8 40L8 8L40 8" stroke="#c9a0ff" stroke-width="1.5"/></svg></div>
+      <div class="page-inner">
+        <div class="balloon-row"><span class="balloon">🎈</span><span class="balloon">🌸</span><span class="balloon">🎂</span><span class="balloon">🐾</span><span class="balloon">🎉</span></div>
+        <div class="wish-card"><div class="wish-icon">🐶</div><p class="wish-title">CORGI-APPROVED JOY</p><p class="wish-text">May your year be filled with boundless happiness!</p></div>
+        <div class="wish-card"><div class="wish-icon">🌸</div><p class="wish-title">BLOOM BEAUTIFULLY</p><p class="wish-text">Like every peony — full, lush, unapologetically vivid.</p></div>
+        <div class="wish-card"><div class="wish-icon">🎂</div><p class="wish-title">SWEETNESS & CAKE</p><p class="wish-text">May every candle you blow out carry a wish straight into the universe, and may it come true in the sweetest way.</p></div>
+        <button class="btn-continue" id="continueToSurprises">🎁 Open Gifts & Take the Quiz 🎉</button>
+        <!-- NEXT BUTTON: 3D FLOWER -->
+        <button class="btn-next-flower" id="nextFlowerBtn">🌸 Next: Enchanted Flower 🌸</button>
+      </div>
+      <div class="page-num">— ✿ II · II ✿ —</div>
+    </div>
+    <div class="ribbon"></div>
+  </div>
+</div>
+<button id="close-btn" onclick="closeLetter()">✕ CLOSE</button>
+
+<!-- INTERACTIVE SURPRISES OVERLAY (Gifts & Quiz) -->
+<div id="surprises-overlay">
+  <div class="surprises-container">
+    <div class="sur-header">
+      <h2>✨ birthday surprises ✨</h2>
+      <button class="quiz-close" id="closeSurprises">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="gifts">🎁 Mystery Gifts</button>
+      <button class="tab-btn" data-tab="quiz">📝 Personalized Quiz</button>
+    </div>
+    <div id="gifts-tab" class="tab-content active">
+      <div class="gifts-grid" id="giftsGrid"></div>
+      <div id="giftRevealArea" class="gift-reveal"></div>
+      <div class="unlock-progress" id="giftProgress">🎁 Gifts opened: 0 / 5</div>
+    </div>
+    <div id="quiz-tab" class="tab-content">
+      <div id="quizQuestions"></div>
+      <div class="unlock-progress" id="quizProgress">📝 Quiz progress: 0 / 3</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3D FLOWER SCENE CONTAINER (initially hidden) -->
+<div id="flower-scene-container">
+    <!-- the canvas will be created by Three.js script -->
+    <button class="back-btn" id="backFromFlower">← Back to Letter</button>
+</div>
+
+<script>
+// ========== DIGITAL RAIN & STARS (same as before) ==========
+(function(){
+  const c=document.getElementById('rain-canvas'),ctx=c.getContext('2d');
+  let W,H,drops=[],msgs=[];
+  const M=["🐾 HAPPY BIRTHDAY","🌸 CELEBRATE 🎉","✨ YOU ARE LOVED","🎈 JOY & MAGIC","💖 BEST DAY","🎂 HAPPY BDAY 🎂"];
+  const CH="🐾HAPPYBIRTHDAY🐶0123456789!✨🎂🎈@#$";
+  function init(){
+    W=c.width=innerWidth;H=c.height=innerHeight;
+    const fs=Math.min(20,Math.max(13,W/38));
+    drops=[]; msgs=[];
+    for(let i=0;i<Math.floor(W/(fs*.65));i++) drops.push({x:i*(fs*.65),y:Math.random()*H,v:1.5+Math.random()*4,fs,g:Math.random()>.88});
+    for(let i=0;i<8;i++) msgs.push({x:Math.random()*W,y:Math.random()*H-H,v:.7+Math.random()*1.6,t:M[i%M.length],c:`hsl(${Math.random()*60+310},80%,68%)`,fs});
+  }
+  function draw(){
+    ctx.fillStyle='rgba(4,4,12,.13)';ctx.fillRect(0,0,W,H);
+    for(let d of drops){
+      ctx.font=`${d.fs}px monospace`;
+      ctx.shadowBlur=d.g?12:4;ctx.shadowColor='#ff9ed4';
+      ctx.fillStyle=`rgba(255,${110+Math.random()*90},200,${.3+Math.random()*.55})`;
+      ctx.fillText(CH[Math.floor(Math.random()*CH.length)],d.x,d.y);
+      d.y+=d.v;if(d.y>H+d.fs){d.y=-d.fs;d.v=1.5+Math.random()*5;d.g=Math.random()>.85;}
+    }
+    ctx.shadowBlur=0;
+    for(let m of msgs){
+      ctx.font=`600 ${m.fs*1.05}px 'Quicksand',sans-serif`;
+      ctx.shadowBlur=10;ctx.shadowColor=m.c;ctx.fillStyle=m.c;
+      ctx.fillText(m.t,m.x,m.y);m.y+=m.v;
+      if(m.y>H+50){m.y=-40;m.x=Math.random()*W;m.t=M[Math.floor(Math.random()*M.length)];m.c=`hsl(${Math.random()*360},80%,65%)`;}
+    }
+    ctx.shadowBlur=0;requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',init);init();draw();
+})();
+// stars
+(function(){
+  const c=document.getElementById('stars-canvas'),ctx=c.getContext('2d');
+  let W,H,S=[];
+  function init(){W=c.width=innerWidth;H=c.height=innerHeight;S=Array.from({length:200},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.2,v:Math.random()*.45+.1,ph:Math.random()*Math.PI*2,t:Math.random()<.3?'p':Math.random()<.2?'g':'w'}));}
+  function draw(t){ctx.clearRect(0,0,W,H);S.forEach(s=>{const a=(Math.sin(t*s.v*.001+s.ph)+1)/2*.85+.08;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=s.t==='p'?`rgba(255,180,210,${a})`:s.t==='g'?`rgba(255,230,100,${a})`:`rgba(255,255,255,${a})`;ctx.fill();});requestAnimationFrame(draw);}
+  window.addEventListener('resize',init);init();requestAnimationFrame(draw);
+})();
+// confetti
+const CC=document.getElementById('confetti-canvas'),CCX=CC.getContext('2d');
+let confetti=[],confOn=false;
+function spawnConf(){
+  CC.width=innerWidth;CC.height=innerHeight;
+  const cols=['#ff6eb4','#c9a0ff','#4dffd2','#ffd700','#ffb3d9'];
+  confetti=Array.from({length:160},()=>({x:Math.random()*CC.width,y:-20-Math.random()*180,r:Math.random()*6+2,vx:(Math.random()-.5)*3.5,vy:Math.random()*3+1.5,rot:Math.random()*360,rs:(Math.random()-.5)*6,c:cols[Math.floor(Math.random()*cols.length)]}));
+  confOn=true;CC.classList.add('on');animConf();
+}
+function animConf(){if(!confOn)return;CCX.clearRect(0,0,CC.width,CC.height);let alive=0;confetti.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.rs;if(p.y<CC.height+20)alive++;CCX.save();CCX.translate(p.x,p.y);CCX.rotate(p.rot*Math.PI/180);CCX.globalAlpha=Math.min(1,(CC.height-p.y+120)/220);CCX.fillStyle=p.c;CCX.beginPath();CCX.arc(0,0,p.r,0,Math.PI*2);CCX.fill();CCX.restore();});if(alive>0)requestAnimationFrame(animConf);else{confOn=false;CC.classList.remove('on');}}
+// DOOR LOGIC
+let open=false;
+const doorW=document.getElementById('door-wrap');
+const dim=document.getElementById('dim');
+const lw=document.getElementById('letter-wrap');
+const letterBook=document.getElementById('letter-book');
+const closebtn=document.getElementById('close-btn');
+function spawnPetals(){for(let i=0;i<20;i++){const p=document.createElement('div');p.className='petal';p.textContent=['🌸','🌺','✨','🎀','🐾'][Math.floor(Math.random()*5)];p.style.cssText=`left:${10+Math.random()*80}vw;top:${20+Math.random()*60}vh;animation-delay:${Math.random()*.6}s;font-size:${.8+Math.random()}rem;`;document.body.appendChild(p);setTimeout(()=>p.remove(),3500);}}
+function openLetter(){if(open)return;open=true;spawnPetals();doorW.classList.add('open');dim.classList.add('on');setTimeout(()=>{lw.classList.add('on');letterBook.classList.add('on');closebtn.classList.add('on');spawnConf();},800);}
+function closeLetter(){if(!open)return;open=false;closebtn.classList.remove('on');letterBook.classList.remove('on');lw.classList.remove('on');dim.classList.remove('on');setTimeout(()=>{doorW.classList.remove('open');},400);}
+document.body.addEventListener('click',function(e){if(!open && !e.target.closest('#letter-book') && !e.target.closest('#close-btn') && !e.target.closest('#surprises-overlay'))openLetter();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLetter();});
+
+// ========== GIFTS & QUIZ (same as before) ==========
+const surprisesOverlay = document.getElementById('surprises-overlay');
+const continueBtn = document.getElementById('continueToSurprises');
+const closeSurprises = document.getElementById('closeSurprises');
+const gifts = [
+  { emoji: "🎲", title: "First memory", message: "The first time we played Monopoly and UNO together! Hours of fun, and nakikitulog pa kami sainyo non 💕", gif: "https://media.giphy.com/media/3o7abB06u9bNzA8LC8/giphy.gif" },
+  { emoji: "👩‍❤️‍👩", title: "Inside joke", message: "Our super favorite titas like mga grabe love na love natin tita and sa super love natin pag mmeet sila nakakainis 😂💖", gif: "https://media.giphy.com/media/l0MYt5jH6gkTW5Iyc/giphy.gif" },
+  { emoji: "🎶", title: "Your song", message: "Daniel Caesar, Adele, Ariana, Bruno Mars etc — same tayo ng mga fave artist! Every song reminds me of you. 🎤💫", gif: "https://media.giphy.com/media/3o7abB9N7vF6Tn7B5C/giphy.gif" },
+  { emoji: "🌟", title: "You're amazing", message: "You have such a kind heart. Never forget how much light you bring into this world — just by being you. ✨", gif: "https://media.giphy.com/media/l0MYt5jH6gkTW5Iyc/giphy.gif" },
+  { emoji: "🎂", title: "Birthday wish", message: "I wish you endless joy, laughter, and all the cake your heart desires! 🎂🥳", gif: "https://media.giphy.com/media/26gR2qGFYqRrIseJO/giphy.gif" }
+];
+let giftsOpened = [false,false,false,false,false];
+let quizCorrect = [false,false,false];
+const quizQuestions = [
+  { text: "What's our favorite to do in December? (like to collect something)", options: ["Christmas decor", "Polaroid photos", "Coins", "Starbucks sticker"], correct: 3, memory: "YES! Starbucks stickers — we both love collecting them every December! ☕🎄" },
+  { text: "Your Roblox character nung first laro natin — what did I say?", options: ["pretty", "cute character", "panget", "cute/pretty"], correct: 3, memory: "You're right — I said cute/pretty! (You're always cute, even when you pick 'panget' 😂) 💕" },
+  { text: "What's our song? 🎶", options: ["Ibalik nyo si Tatay Digong", "Frank Ocean - Ivy", "Love Don't Change - Jeremiah", "Sara at BBM forever"], correct: 1, memory: "Yes! Frank Ocean - Ivy. That song always makes me think of you. 🌿💖" }
+];
+function renderGifts(){
+  const grid = document.getElementById('giftsGrid'); grid.innerHTML = '';
+  gifts.forEach((g, idx) => {
+    const box = document.createElement('div');
+    box.className = 'gift-box' + (giftsOpened[idx] ? ' opened' : '');
+    box.innerHTML = `<span class="gift-emoji">${giftsOpened[idx] ? '🎁✨' : '🎁'}</span><div class="gift-title">${g.title}</div>`;
+    if(!giftsOpened[idx]) box.onclick = () => openGift(idx);
+    grid.appendChild(box);
+  });
+  const openedCount = giftsOpened.filter(v=>v).length;
+  document.getElementById('giftProgress').innerHTML = `🎁 Gifts opened: ${openedCount} / 5`;
+}
+function openGift(idx){
+  if(giftsOpened[idx]) return;
+  giftsOpened[idx] = true; spawnConf();
+  const revealDiv = document.getElementById('giftRevealArea');
+  const g = gifts[idx];
+  revealDiv.style.display = 'block';
+  revealDiv.innerHTML = `<button class="close-reveal" onclick="this.parentElement.style.display='none'; this.parentElement.innerHTML='';">✕</button><div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;"><img src="${g.gif}" style="width:80px; border-radius:20px;"><div><strong>${g.emoji} ${g.title}</strong><br>${g.message}</div></div>`;
+  renderGifts();
+}
+function renderQuiz(){
+  const container = document.getElementById('quizQuestions');
+  container.innerHTML = '';
+  quizQuestions.forEach((q, idx) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-question';
+    qDiv.innerHTML = `<p>${idx+1}. ${q.text}</p><div class="quiz-options" id="qopts-${idx}"></div><div class="quiz-feedback" id="qfeed-${idx}"></div>`;
+    container.appendChild(qDiv);
+    const optsDiv = qDiv.querySelector(`.quiz-options`);
+    q.options.forEach((opt, optIdx) => {
+      const btn = document.createElement('div');
+      btn.className = 'quiz-opt';
+      if(quizCorrect[idx]) btn.classList.add('correct-disabled');
+      btn.textContent = opt;
+      if(!quizCorrect[idx]) btn.onclick = () => checkAnswer(idx, optIdx);
+      optsDiv.appendChild(btn);
+    });
+    if(quizCorrect[idx]) qDiv.querySelector('.quiz-feedback').innerHTML = `<span style="color:#5a9e4e;">✅ Correct! ${q.memory}</span>`;
+  });
+  const correctCount = quizCorrect.filter(v=>v).length;
+  document.getElementById('quizProgress').innerHTML = `📝 Quiz progress: ${correctCount} / 3`;
+}
+function checkAnswer(qIdx, optIdx){
+  if(quizCorrect[qIdx]) return;
+  if(optIdx === quizQuestions[qIdx].correct){
+    quizCorrect[qIdx] = true; spawnConf();
+    const feedbackDiv = document.querySelector(`#quizQuestions .quiz-question:nth-child(${qIdx+1}) .quiz-feedback`);
+    feedbackDiv.innerHTML = `<span style="color:#5a9e4e;">✅ Correct! ${quizQuestions[qIdx].memory}</span>`;
+    const opts = document.querySelectorAll(`#quizQuestions .quiz-question:nth-child(${qIdx+1}) .quiz-opt`);
+    opts.forEach(btn => btn.classList.add('correct-disabled'));
+    renderQuiz();
+  } else {
+    const feedbackDiv = document.querySelector(`#quizQuestions .quiz-question:nth-child(${qIdx+1}) .quiz-feedback`);
+    if(qIdx === 1 && optIdx === 2) feedbackDiv.innerHTML = `<span style="color:#c4527f;">❌ Not quite! The correct answer is cute/pretty 💕</span>`;
+    else feedbackDiv.innerHTML = `<span style="color:#c4527f;">❌ Not quite. Try again! 💭</span>`;
+    setTimeout(() => { if(!quizCorrect[qIdx]) feedbackDiv.innerHTML = ''; }, 1500);
+  }
+}
+// Tab switching
+const tabBtns = document.querySelectorAll('.tab-btn');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.dataset.tab;
+    document.getElementById('gifts-tab').classList.toggle('active', tabId === 'gifts');
+    document.getElementById('quiz-tab').classList.toggle('active', tabId === 'quiz');
+  });
+});
+function openSurprises(){ surprisesOverlay.classList.add('active'); renderGifts(); renderQuiz(); document.getElementById('giftRevealArea').style.display = 'none'; document.getElementById('giftRevealArea').innerHTML = ''; }
+function closeSurprisesOverlay(){ surprisesOverlay.classList.remove('active'); }
+continueBtn.addEventListener('click', ()=>{ closeLetter(); setTimeout(()=>{ openSurprises(); }, 400); });
+closeSurprises.addEventListener('click', closeSurprisesOverlay);
+
+// ========== 3D FLOWER SCENE ==========
+const flowerContainer = document.getElementById('flower-scene-container');
+const backFromFlower = document.getElementById('backFromFlower');
+const nextFlowerBtn = document.getElementById('nextFlowerBtn');
+let flowerSceneInitialized = false;
+
+function initFlowerScene() {
+    if (flowerSceneInitialized) return;
+    flowerSceneInitialized = true;
+    // load Three.js module dynamically and run the provided script
+    import('https://unpkg.com/three@0.128.0/build/three.module.js').then((THREE) => {
+        // The flower scene code adapted from the user's HTML (same as provided, but encapsulated)
+        const canvas = document.createElement('canvas');
+        canvas.id = 'flowerCanvas';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
+        flowerContainer.appendChild(canvas);
+        // Remove any existing canvas? but we just add one.
+        const containerDiv = flowerContainer;
+        // Remove any extra canvases if needed
+        const existingCanvas = containerDiv.querySelector('canvas');
+        if (existingCanvas && existingCanvas !== canvas) existingCanvas.remove();
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1f);
+        scene.fog = new THREE.FogExp2(0x0a0a1f, 0.005);
+        const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 80);
+        camera.position.set(0, 1.8, 12);
+        camera.lookAt(0, 0.8, 0);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        
+        // Lighting
+        const ambient = new THREE.AmbientLight(0x554466, 0.65);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xffddcc, 1.0);
+        mainLight.position.set(-2, 5, 3);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0xffaa99, 0.5);
+        fillLight.position.set(3, 2, -2);
+        scene.add(fillLight);
+        const rimLight = new THREE.PointLight(0xffaa88, 0.9);
+        rimLight.position.set(0, 1.5, -2.5);
+        scene.add(rimLight);
+        const backRim = new THREE.PointLight(0xffaa77, 0.8);
+        backRim.position.set(0, 1.8, -3.5);
+        scene.add(backRim);
+        const movingLight = new THREE.PointLight(0xff88aa, 1.2);
+        movingLight.position.set(1, 1.5, 1);
+        scene.add(movingLight);
+        const bottomGlow = new THREE.PointLight(0xff88aa, 0.7);
+        bottomGlow.position.set(0, -0.5, 0);
+        scene.add(bottomGlow);
+        const centerGlow = new THREE.PointLight(0xffaa88, 3.2, 6.5);
+        centerGlow.position.set(0, 0.35, 0);
+        scene.add(centerGlow);
+        
+        function createPetalGeometry(len, maxWidth, curl, ruffle, segU = 56, segV = 40) {
+            const positions = [], indices = [];
+            for (let i = 0; i <= segU; i++) {
+                const u = i / segU;
+                const width = maxWidth * Math.pow(Math.sin(Math.PI * u), 0.7);
+                for (let j = 0; j <= segV; j++) {
+                    const v = j / segV;
+                    const curlFactor = curl * Math.sin(Math.PI * u) * len * 0.22;
+                    const ruffleFactor = ruffle * Math.sin(Math.PI * v) * (v < 0.5 ? -1 : 1) * Math.sin(2 * Math.PI * u) * 0.32;
+                    const x = width * (v - 0.5);
+                    const y = curlFactor + ruffleFactor;
+                    const z = len * u;
+                    positions.push(x, y, z);
+                }
+            }
+            for (let i = 0; i < segU; i++) {
+                for (let j = 0; j < segV; j++) {
+                    const a = i * (segV + 1) + j;
+                    const b = a + 1;
+                    const c = a + (segV + 1);
+                    const d = c + 1;
+                    indices.push(a, b, d, a, d, c);
+                }
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            return geometry;
+        }
+        const flowerGroup = new THREE.Group();
+        scene.add(flowerGroup);
+        const petalItems = [];
+        const colors = [['#ffeef4','#ffb3c6'],['#ffe5ef','#ffa5bb'],['#ffdbeb','#ff99b0'],['#ffd0e3','#ff8da5'],['#ffc6dc','#ff8099'],['#ffbdd4','#ff7088'],['#ffb5cc','#ff6080']];
+        function addPetalRing(layerIdx, count, len, maxWidth, curl, ruffle, angleStart, angleEnd, colorIdx, opacity, scaleFactor = 1.0) {
+            const col = colors[colorIdx % colors.length][0];
+            const emCol = colors[colorIdx % colors.length][1];
+            const geometry = createPetalGeometry(len, maxWidth, curl, ruffle);
+            const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(col), emissive: new THREE.Color(emCol), emissiveIntensity: 0.28, shininess: 125, specular: 0xffddbb, transparent: true, opacity: opacity, side: THREE.DoubleSide });
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const azimuthGroup = new THREE.Group();
+                azimuthGroup.rotation.y = angle;
+                const elevationGroup = new THREE.Group();
+                const elevation = angleStart + (angleEnd - angleStart) * (i / count);
+                elevationGroup.rotation.x = -elevation * Math.PI / 180;
+                const mesh = new THREE.Mesh(geometry, material.clone());
+                mesh.scale.setScalar(scaleFactor * (0.86 + Math.random() * 0.28));
+                mesh.castShadow = true;
+                elevationGroup.add(mesh);
+                azimuthGroup.add(elevationGroup);
+                flowerGroup.add(azimuthGroup);
+                petalItems.push({ group: elevationGroup, baseElevation: -elevation * Math.PI / 180, windOffset: Math.random() * Math.PI * 2, azimuthGroup: azimuthGroup, bloomOffset: (i / count) * Math.PI * 2 });
+            }
+        }
+        addPetalRing(0,8,3.95,1.58,-0.71,0.80,82,9,0,0.38,1.0);
+        addPetalRing(0,9,3.48,1.42,-0.52,0.66,80,14,0,0.43,1.0);
+        addPetalRing(1,10,2.98,1.22,-0.26,0.54,78,26,1,0.51,0.98);
+        addPetalRing(1,11,2.58,1.08,0.04,0.46,76,37,1,0.59,0.96);
+        addPetalRing(2,12,2.18,0.92,0.40,0.36,74,51,2,0.66,0.94);
+        addPetalRing(2,13,1.88,0.78,0.70,0.28,72,62,2,0.73,0.92);
+        addPetalRing(2,14,1.54,0.66,1.00,0.22,70,71,2,0.79,0.90);
+        addPetalRing(3,15,1.22,0.54,1.34,0.16,68,76,3,0.85,0.88);
+        addPetalRing(3,17,0.94,0.44,1.58,0.12,66,80,3,0.90,0.86);
+        addPetalRing(3,19,0.66,0.34,1.78,0.08,64,83,4,0.94,0.84);
+        addPetalRing(3,16,0.52,0.28,1.92,0.05,60,86,5,0.96,0.82);
+        addPetalRing(3,12,0.42,0.22,2.02,0.03,56,88,6,0.98,0.80);
+        
+        const coreGroup = new THREE.Group();
+        flowerGroup.add(coreGroup);
+        const pistilMat = new THREE.MeshPhongMaterial({ color: 0xffaa66, emissive: 0xff4422, emissiveIntensity: 0.9 });
+        const pistil = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 32), pistilMat);
+        coreGroup.add(pistil);
+        const filamentCount = 260;
+        const filamentGeo = new THREE.CylinderGeometry(0.018, 0.024, 0.65, 6);
+        const antherGeo = new THREE.SphereGeometry(0.058, 12, 12);
+        const antherMat = new THREE.MeshPhongMaterial({ color: 0xff8866, emissive: 0xff4422, emissiveIntensity: 0.8 });
+        for (let i = 0; i < filamentCount; i++) {
+            const angle = (i / filamentCount) * Math.PI * 2;
+            const rad = 0.42 + Math.random() * 0.34;
+            const x = Math.cos(angle) * rad;
+            const z = Math.sin(angle) * rad;
+            const y = 0.18 + Math.random() * 0.42;
+            const filament = new THREE.Mesh(filamentGeo, new THREE.MeshPhongMaterial({ color: 0xffaa77, emissive: 0x552200 }));
+            filament.position.set(x, y, z);
+            filament.rotation.z = Math.atan2(z, x);
+            filament.rotation.x = 0.5 + Math.random() * 0.6;
+            coreGroup.add(filament);
+            const anther = new THREE.Mesh(antherGeo, antherMat.clone());
+            anther.position.set(x + Math.cos(angle) * 0.15, y + 0.34, z + Math.sin(angle) * 0.15);
+            coreGroup.add(anther);
+        }
+        const innerSparkleCount = 1800;
+        const innerSparklePos = [];
+        for (let i = 0; i < innerSparkleCount; i++) { innerSparklePos.push((Math.random() - 0.5) * 1.4, (Math.random() - 0.5) * 1.0 + 0.2, (Math.random() - 0.5) * 1.4); }
+        const innerSparkleGeo = new THREE.BufferGeometry();
+        innerSparkleGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(innerSparklePos), 3));
+        const innerSparkleMat = new THREE.PointsMaterial({ size: 0.032, color: 0xffaa88, transparent: true, blending: THREE.AdditiveBlending });
+        const innerSparkles = new THREE.Points(innerSparkleGeo, innerSparkleMat);
+        coreGroup.add(innerSparkles);
+        
+        const groundCanvas = document.createElement('canvas'); groundCanvas.width = 512; groundCanvas.height = 512;
+        const gCtx = groundCanvas.getContext('2d');
+        const grad = gCtx.createRadialGradient(256,256,0,256,256,256);
+        grad.addColorStop(0,'rgba(120,70,140,0.7)'); grad.addColorStop(0.5,'rgba(70,40,90,0.4)'); grad.addColorStop(1,'rgba(10,10,30,0)');
+        gCtx.fillStyle = grad; gCtx.fillRect(0,0,512,512);
+        const groundTexture = new THREE.CanvasTexture(groundCanvas);
+        const groundPlane = new THREE.Mesh(new THREE.PlaneGeometry(9,9), new THREE.MeshPhongMaterial({ map: groundTexture, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));
+        groundPlane.rotation.x = -Math.PI / 2; groundPlane.position.y = -4.0; scene.add(groundPlane);
+        
+        // Particles (floating petals, glitter, etc.) - simplified but functional
+        const petalTextureCanvas = document.createElement('canvas'); petalTextureCanvas.width = 64; petalTextureCanvas.height = 64;
+        const ptCtx = petalTextureCanvas.getContext('2d');
+        ptCtx.fillStyle = '#ffb7c5'; ptCtx.beginPath(); ptCtx.ellipse(32,32,24,16,0,0,Math.PI*2); ptCtx.fill();
+        ptCtx.fillStyle = '#ff99aa'; ptCtx.beginPath(); ptCtx.ellipse(32,32,20,12,0,0,Math.PI*2); ptCtx.fill();
+        ptCtx.fillStyle = '#ffffff'; ptCtx.beginPath(); ptCtx.ellipse(32,32,12,8,0,0,Math.PI*2); ptCtx.fill();
+        const petalSprite = new THREE.CanvasTexture(petalTextureCanvas);
+        const floatingPetalsCount = 2800;
+        const floatingPetalsPos = new Float32Array(floatingPetalsCount * 3);
+        for (let i = 0; i < floatingPetalsCount; i++) { const radius = 2.2 + Math.random() * 4.5; const angle = Math.random() * Math.PI * 2; const height = -1.5 + Math.random() * 4.8; floatingPetalsPos[i*3] = Math.cos(angle) * radius; floatingPetalsPos[i*3+1] = height; floatingPetalsPos[i*3+2] = Math.sin(angle) * radius; }
+        const petalsGeo = new THREE.BufferGeometry(); petalsGeo.setAttribute('position', new THREE.BufferAttribute(floatingPetalsPos, 3));
+        const petalsMat = new THREE.PointsMaterial({ map: petalSprite, color: 0xffaacc, size: 0.17, transparent: true, blending: THREE.AdditiveBlending });
+        const floatingPetals = new THREE.Points(petalsGeo, petalsMat); scene.add(floatingPetals);
+        
+        const glitterCount = 5000; const glitterPositions = new Float32Array(glitterCount * 3); const glitterColors = new Float32Array(glitterCount * 3);
+        for (let i = 0; i < glitterCount; i++) { glitterPositions[i*3] = (Math.random() - 0.5) * 7.5; glitterPositions[i*3+1] = (Math.random() - 0.5) * 4.5 + 0.5; glitterPositions[i*3+2] = (Math.random() - 0.5) * 7.5; const r = Math.random(); if (r < 0.33) { glitterColors[i*3]=1.0; glitterColors[i*3+1]=0.7; glitterColors[i*3+2]=0.8; } else if (r < 0.66) { glitterColors[i*3]=1.0; glitterColors[i*3+1]=0.8; glitterColors[i*3+2]=0.5; } else { glitterColors[i*3]=1.0; glitterColors[i*3+1]=1.0; glitterColors[i*3+2]=0.7; } }
+        const glitterGeo = new THREE.BufferGeometry(); glitterGeo.setAttribute('position', new THREE.BufferAttribute(glitterPositions, 3)); glitterGeo.setAttribute('color', new THREE.BufferAttribute(glitterColors, 3));
+        const glitterMat = new THREE.PointsMaterial({ size: 0.03, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending });
+        const glitter = new THREE.Points(glitterGeo, glitterMat); scene.add(glitter);
+        
+        const pollenCount = 2800; const pollenPositions = new Float32Array(pollenCount * 3);
+        for (let i = 0; i < pollenCount; i++) { const radius = 1.8 + Math.random() * 4.2; const angle = Math.random() * Math.PI * 2; const height = -1.2 + Math.random() * 4.0; pollenPositions[i*3] = Math.cos(angle) * radius; pollenPositions[i*3+1] = height; pollenPositions[i*3+2] = Math.sin(angle) * radius; }
+        const pollenGeo = new THREE.BufferGeometry(); pollenGeo.setAttribute('position', new THREE.BufferAttribute(pollenPositions, 3));
+        const pollenMat = new THREE.PointsMaterial({ size: 0.05, color: 0xffaa77, transparent: true, blending: THREE.AdditiveBlending });
+        const pollen = new THREE.Points(pollenGeo, pollenMat); scene.add(pollen);
+        
+        const dustCount = 2000; const dustPositions = new Float32Array(dustCount * 3);
+        for (let i = 0; i < dustCount; i++) { dustPositions[i*3] = (Math.random() - 0.5) * 6; dustPositions[i*3+1] = (Math.random() - 0.5) * 3.5; dustPositions[i*3+2] = (Math.random() - 0.5) * 6; }
+        const dustGeo = new THREE.BufferGeometry(); dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+        const dustMat = new THREE.PointsMaterial({ size: 0.025, color: 0xffccaa, transparent: true, blending: THREE.AdditiveBlending });
+        const dust = new THREE.Points(dustGeo, dustMat); scene.add(dust);
+        
+        const starCount = 3000; const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) { starPositions[i*3] = (Math.random() - 0.5) * 130; starPositions[i*3+1] = (Math.random() - 0.5) * 80; starPositions[i*3+2] = (Math.random() - 0.5) * 100 - 40; }
+        const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMat = new THREE.PointsMaterial({ size: 0.09, color: 0xffddbb, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+        const stars = new THREE.Points(starGeo, starMat); scene.add(stars);
+        
+        let dragging = false, lastX = 0, lastY = 0, rotY = 0, rotX = 0.2, targetZoom = 11.5, currentZoom = 11.5, time = 0;
+        canvas.addEventListener('mousedown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+        window.addEventListener('mousemove', (e) => { if (!dragging) return; const dx = e.clientX - lastX, dy = e.clientY - lastY; rotY += dx * 0.009; rotX += dy * 0.006; rotX = Math.max(-0.6, Math.min(1.2, rotX)); lastX = e.clientX; lastY = e.clientY; });
+        window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, { passive: false });
+        window.addEventListener('touchmove', (e) => { if (!dragging) return; const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY; rotY += dx * 0.009; rotX += dy * 0.006; rotX = Math.max(-0.6, Math.min(1.2, rotX)); lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; e.preventDefault(); }, { passive: false });
+        window.addEventListener('touchend', () => { dragging = false; });
+        function onWheel(e) { targetZoom += -e.deltaY * 0.005; targetZoom = Math.max(5, Math.min(18, targetZoom)); e.preventDefault(); }
+        window.addEventListener('wheel', onWheel, { passive: false });
+        let initialDistance = 0, initialZoom = currentZoom;
+        canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY; initialDistance = Math.hypot(dx, dy); initialZoom = currentZoom; } }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => { if (e.touches.length === 2) { const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY; const distance = Math.hypot(dx, dy); const scale = distance / initialDistance; targetZoom = initialZoom * scale; targetZoom = Math.max(5, Math.min(18, targetZoom)); e.preventDefault(); } }, { passive: false });
+        
+        let dynamicOpen = 0.72, dynamicBloom = 0.44;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.012;
+            const breath = 0.5 + 0.5 * Math.sin(time * 0.18);
+            dynamicOpen = 0.68 + breath * 0.12;
+            dynamicBloom = 0.4 + breath * 0.14;
+            for (const p of petalItems) { p.group.rotation.x = p.baseElevation * (1 - dynamicOpen); const windX = Math.sin(time * 0.85 + p.windOffset) * 0.018; const windY = Math.sin(time * 0.55 + p.windOffset * 1.2) * 0.01; p.group.rotation.x += windX; p.azimuthGroup.rotation.z += windY * 0.6; p.azimuthGroup.rotation.x += windY * 0.4; const twist = dynamicBloom * 0.9 * Math.sin(p.bloomOffset); p.azimuthGroup.rotation.y = p.bloomOffset + twist; }
+            flowerGroup.rotation.y = rotY; flowerGroup.rotation.x = rotX;
+            const pulse = 1 + 0.014 * Math.sin(time * 1.1); flowerGroup.scale.setScalar(pulse);
+            centerGlow.intensity = 3.0 + 1.1 * Math.sin(time * 1.25);
+            rimLight.intensity = 0.85 + 0.3 * Math.sin(time * 1.4);
+            backRim.intensity = 0.75 + 0.3 * Math.sin(time * 1.7);
+            movingLight.position.x = 1.2 * Math.sin(time * 0.7); movingLight.position.z = 1.0 * Math.cos(time * 0.55); movingLight.intensity = 1.0 + 0.5 * Math.sin(time * 1.9);
+            bottomGlow.intensity = 0.6 + 0.3 * Math.sin(time * 1.2);
+            const petalPositions = petalsGeo.attributes.position.array;
+            for (let i = 0; i < floatingPetalsCount; i++) { const idx = i * 3; const x = petalPositions[idx]; const z = petalPositions[idx+2]; const rad = Math.hypot(x, z); const ang = Math.atan2(z, x); const newAng = ang + 0.0006; petalPositions[idx] = Math.cos(newAng) * rad; petalPositions[idx+2] = Math.sin(newAng) * rad; petalPositions[idx+1] += 0.0007 + Math.sin(time + i) * 0.0006; if (petalPositions[idx+1] > 3.0) petalPositions[idx+1] = -1.5; }
+            petalsGeo.attributes.position.needsUpdate = true;
+            glitter.rotation.y += 0.0018; glitter.rotation.x = Math.sin(time * 0.3) * 0.09;
+            pollen.rotation.y -= 0.001; pollen.rotation.x = Math.cos(time * 0.28) * 0.07;
+            dust.rotation.y += 0.0012; dust.rotation.x = Math.sin(time * 0.4) * 0.06;
+            stars.rotation.y += 0.0004; starMat.size = 0.09 + Math.sin(time * 1.5) * 0.015;
+            currentZoom += (targetZoom - currentZoom) * 0.1;
+            camera.position.z = currentZoom; camera.position.y = 1.5 + currentZoom * 0.02;
+            camera.lookAt(0, 0.85, 0);
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => { const newW = window.innerWidth, newH = window.innerHeight; canvas.width = newW; canvas.height = newH; camera.aspect = newW / newH; camera.updateProjectionMatrix(); renderer.setSize(newW, newH); });
+        canvas.style.cursor = 'grab';
+    }).catch(err => console.error('Three.js import failed', err));
+}
+
+nextFlowerBtn.addEventListener('click', () => {
+    // close letter completely and show flower
+    if (open) closeLetter();
+    // hide letter container and all overlays
+    lw.classList.remove('on');
+    letterBook.classList.remove('on');
+    closebtn.classList.remove('on');
+    dim.classList.remove('on');
+    doorW.classList.remove('open');
+    surprisesOverlay.classList.remove('active');
+    // show flower container
+    flowerContainer.classList.add('visible');
+    if (!flowerSceneInitialized) initFlowerScene();
+});
+
+backFromFlower.addEventListener('click', () => {
+    flowerContainer.classList.remove('visible');
+    // re-open letter? we just show the flowers again (the scene is still there)
+    // but we can just let the user click flowers to reopen letter
+    // For better UX, we don't auto-reopen letter; user can tap the flowers again
+    // But the original openLetter function works when clicking flowers.
+    // Reset door state? The door is closed now. We can reset open flag so flowers click works.
+    open = false; // reset so clicking flowers opens letter again
+    lw.classList.remove('on');
+    letterBook.classList.remove('on');
+    closebtn.classList.remove('on');
+    dim.classList.remove('on');
+    doorW.classList.remove('open');
+});
+
+// extra animations
+const style=document.createElement('style');
+style.textContent=`@keyframes tailWag{0%{transform:rotate(-20deg)}100%{transform:rotate(25deg)}}@keyframes earFlop{0%{transform:rotate(-5deg)}100%{transform:rotate(8deg)}}@keyframes hatWobble{0%{transform:rotate(-2deg)}100%{transform:rotate(3deg)}}`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
